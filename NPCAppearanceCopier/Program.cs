@@ -30,27 +30,6 @@ namespace NPCAppearanceCopier
             NACsettings settings = Settings.Value;
 
             HashSet<ModKey> PluginsToMerge = new HashSet<ModKey>();
-            HashSet<ModKey> PluginsExcludedFromMerge = new HashSet<ModKey>();
-            if (ModKey.TryFromNameAndExtension("Skyrim.esm", out var SkyrimKey))
-            {
-                PluginsExcludedFromMerge.Add(SkyrimKey);
-            }
-            if (ModKey.TryFromNameAndExtension("Update.esm", out var UpdateKey))
-            {
-                PluginsExcludedFromMerge.Add(UpdateKey);
-            }
-            if (ModKey.TryFromNameAndExtension("Dawnguard.esm", out var DawnguardKey))
-            {
-                PluginsExcludedFromMerge.Add(DawnguardKey);
-            }
-            if (ModKey.TryFromNameAndExtension("HearthFires.esm", out var HearthFiresKey))
-            {
-                PluginsExcludedFromMerge.Add(HearthFiresKey);
-            }
-            if (ModKey.TryFromNameAndExtension("Dragonborn.esm", out var DragonbornKey))
-            {
-                PluginsExcludedFromMerge.Add(DragonbornKey);
-            }
 
             foreach (var NPCdef in settings.NPCs)
             {
@@ -71,9 +50,10 @@ namespace NPCAppearanceCopier
                 }
                 var AcceptorNPC = state.PatchMod.Npcs.GetOrAddAsOverride(copyTo);
                 
+
+                // HANDLE FACEGEN HERE
                 string donorNifPath = state.DataFolderPath + "\\meshes\\actors\\character\\facegendata\\facegeom\\" + DonorNPCGetter.FormKey.ModKey.ToString() + "\\00" + DonorNPCGetter.FormKey.IDString() + ".nif";
                 string acceptorNifPath = state.DataFolderPath + "\\meshes\\actors\\character\\facegendata\\facegeom\\" + AcceptorNPC.FormKey.ModKey.ToString() + "\\00" + AcceptorNPC.FormKey.IDString() + ".nif";
-
                 if (!File.Exists(donorNifPath))
                 {
                     Console.WriteLine("The following Facegen .nif does not exist. If it is within a BSA, please extract it. Patching of this NPC will be skipped.\n{0}", donorNifPath);
@@ -82,38 +62,68 @@ namespace NPCAppearanceCopier
 
                 string donorDdsPath = state.DataFolderPath + "\\textures\\actors\\character\\facegendata\\facetint\\" + DonorNPCGetter.FormKey.ModKey.ToString() + "\\00" + DonorNPCGetter.FormKey.IDString() + ".dds";
                 string acceptorDdsPath = state.DataFolderPath + "\\textures\\actors\\character\\facegendata\\facetint\\" + AcceptorNPC.FormKey.ModKey.ToString() + "\\00" + AcceptorNPC.FormKey.IDString() + ".dds";
-
                 if (!File.Exists(donorDdsPath))
                 {
                     Console.WriteLine("The following Facegen .dds does not exist. If it is within a BSA, please extract it. Patching of this NPC will be skipped.\n{0}", donorDdsPath);
                     continue;
                 }
 
+                // Backup NPC Facegen files if necessary
+                if (File.Exists(acceptorNifPath) && NPCdef.BackUpFaceGen == true)
+                {
+                    string AcceptorNifBackupPath = state.ExtraSettingsDataPath + "\\BackupAssets\\" + AcceptorNPC.FormKey.ModKey.ToString() + "\\00" + AcceptorNPC.FormKey.IDString() + ".nif_bak_0";
+                    backupFaceGen(AcceptorNifBackupPath, AcceptorNPC, state);
+                }
+
+                if (File.Exists(acceptorDdsPath) && NPCdef.BackUpFaceGen == true)
+                {
+                    string AcceptorDdsBackupPath = state.ExtraSettingsDataPath + "\\BackupAssets\\" + AcceptorNPC.FormKey.ModKey.ToString() + "\\00" + AcceptorNPC.FormKey.IDString() + ".dds_bak_0";
+                    backupFaceGen(AcceptorDdsBackupPath, AcceptorNPC, state);
+                }
+
+                // Copy NPC Facegen Nif and Dds from the donor to acceptor NPC
+                File.Copy(donorNifPath, acceptorNifPath, true);
+                File.Copy(donorDdsPath, acceptorDdsPath, true);
+                // END FACEGEN
+
+                //Race
+                if (AcceptorNPC.Race != DonorNPCGetter.Race)
+                {
+                    Console.WriteLine("Warning: Changing race from {0} to {1}", AcceptorNPC.Race.FormKey.ToString(), DonorNPCGetter.Race.FormKey.ToString());
+                }
                 AcceptorNPC.Race.SetTo(DonorNPCGetter.Race.FormKey);
 
+                //Head Texture
                 AcceptorNPC.HeadTexture.SetTo(DonorNPCGetter.HeadTexture.FormKeyNullable);
+
+                //Head Parts
                 AcceptorNPC.HeadParts.Clear(); 
                 foreach (var hp in DonorNPCGetter.HeadParts)
                 {
                     AcceptorNPC.HeadParts.Add(hp);
                 }
 
+                //Face Morph
                 if (AcceptorNPC.FaceMorph != null && DonorNPCGetter.FaceMorph != null)
                 {
                     AcceptorNPC.FaceMorph.Clear();
                     AcceptorNPC.FaceMorph.DeepCopyIn(DonorNPCGetter.FaceMorph);
                 }
 
+                //Face Parts
                 if (AcceptorNPC.FaceParts != null && DonorNPCGetter.FaceParts != null)
                 {
                     AcceptorNPC.FaceParts.Clear();
                     AcceptorNPC.FaceParts.DeepCopyIn(DonorNPCGetter.FaceParts);
                 }
 
+                //Hair Color
                 AcceptorNPC.HairColor.SetTo(DonorNPCGetter.HairColor.FormKeyNullable);
                 
+                //Texture Lighting
                 AcceptorNPC.TextureLighting = DonorNPCGetter.TextureLighting;
 
+                //Tint Layers
                 AcceptorNPC.TintLayers.Clear();
                 foreach (var tl in DonorNPCGetter.TintLayers)
                 {
@@ -122,72 +132,29 @@ namespace NPCAppearanceCopier
                     AcceptorNPC.TintLayers.Add(newTintLayer);
                 }
 
+                //Height and Weight
                 AcceptorNPC.Height = DonorNPCGetter.Height;
                 AcceptorNPC.Weight = DonorNPCGetter.Weight;
 
+                //WNAM a.k.a Body
                 if (NPCdef.CopyBody == true)
                 {
                     AcceptorNPC.WornArmor.SetTo(DonorNPCGetter.WornArmor);
                 }
 
+                //Outfits
                 if (NPCdef.CopyOutfit == true)
                 {
                     AcceptorNPC.DefaultOutfit.SetTo(DonorNPCGetter.DefaultOutfit);
                     AcceptorNPC.SleepingOutfit.SetTo(DonorNPCGetter.SleepingOutfit);
                 }
 
-                if (File.Exists(acceptorNifPath) && NPCdef.BackUpFaceGen == true)
-                {
-                    string AcceptorNifBackupPath = state.ExtraSettingsDataPath + "\\BackupAssets\\" + AcceptorNPC.FormKey.ModKey.ToString() + "\\00" + AcceptorNPC.FormKey.IDString() + ".nif_bak_0";
-                    int count = 0;
-                    while (File.Exists(AcceptorNifBackupPath) == true)
-                    {
-                        count++;
-                        AcceptorNifBackupPath.Remove(AcceptorNifBackupPath.Length - 1, 1);
-                        AcceptorNifBackupPath += count.ToString();
-                    }
-                    if (Directory.Exists(state.ExtraSettingsDataPath + "\\BackupAssets") == false)
-                    {
-                        Directory.CreateDirectory(state.ExtraSettingsDataPath + "\\BackupAssets");
-                    }
-
-                    if (Directory.Exists(state.ExtraSettingsDataPath + "\\BackupAssets\\" + AcceptorNPC.FormKey.ModKey.ToString()) == false)
-                    {
-                        Directory.CreateDirectory(state.ExtraSettingsDataPath + "\\BackupAssets\\" + AcceptorNPC.FormKey.ModKey.ToString());
-                    }
-
-                    File.Move(acceptorNifPath, AcceptorNifBackupPath);
-                }
-
-                if (File.Exists(acceptorDdsPath))
-                {
-                    string AcceptorDdsBackupPath = state.ExtraSettingsDataPath + "\\BackupAssets\\" + AcceptorNPC.FormKey.ModKey.ToString() + "\\00" + AcceptorNPC.FormKey.IDString() + ".dds_bak_0";
-                    int count = 0;
-                    while (File.Exists(AcceptorDdsBackupPath) == true)
-                    {
-                        count++;
-                        AcceptorDdsBackupPath.Remove(AcceptorDdsBackupPath.Length - 1, 1);
-                        AcceptorDdsBackupPath += count.ToString();
-                    }
-                    if (Directory.Exists(state.ExtraSettingsDataPath + "\\BackupAssets") == false)
-                    {
-                        Directory.CreateDirectory(state.ExtraSettingsDataPath + "\\BackupAssets");
-                    }
-                    if (Directory.Exists(state.ExtraSettingsDataPath + "\\BackupAssets\\" + AcceptorNPC.FormKey.ModKey.ToString()) == false)
-                    {
-                        Directory.CreateDirectory(state.ExtraSettingsDataPath + "\\BackupAssets\\" + AcceptorNPC.FormKey.ModKey.ToString());
-                    }
-                    File.Move(acceptorDdsPath, AcceptorDdsBackupPath);
-                }
-
-                File.Copy(donorNifPath, acceptorNifPath, true);
-                File.Copy(donorDdsPath, acceptorDdsPath, true);
-
+                // If necessary, add dependencies (headparts, worn armors, etc) to be merged into Synthesis.esp
                 if (NPCdef.CopyResourcesToPlugin == true)
                 {
                     foreach (var FL in DonorNPCGetter.ContainedFormLinks)
                     {
-                        if (PluginsExcludedFromMerge.Contains(FL.FormKey.ModKey) == false && PluginsToMerge.Contains(FL.FormKey.ModKey) == false)
+                        if (settings.PluginsExcludedFromMerge.Contains(FL.FormKey.ModKey) == false && PluginsToMerge.Contains(FL.FormKey.ModKey) == false)
                         {
                             PluginsToMerge.Add(FL.FormKey.ModKey);
                         }
@@ -201,6 +168,34 @@ namespace NPCAppearanceCopier
                 Console.WriteLine("Remapping Dependencies from {0}.", mk.ToString());
                 state.PatchMod.DuplicateFromOnlyReferenced(state.LinkCache, mk, out var _);
             }
+        }
+
+        public static void backupFaceGen(string inputPath, Npc? NPCtoBackup, IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
+        {
+            if (NPCtoBackup == null)
+            {
+                return;
+            }
+
+            string BackupPath = state.ExtraSettingsDataPath + "\\BackupAssets\\" + NPCtoBackup.FormKey.ModKey.ToString() + "\\00" + NPCtoBackup.FormKey.IDString() + ".nif_bak_0";
+            int count = 0;
+            while (File.Exists(BackupPath) == true)
+            {
+                count++;
+                BackupPath.Remove(BackupPath.Length - 1, 1);
+                BackupPath += count.ToString();
+            }
+            if (Directory.Exists(state.ExtraSettingsDataPath + "\\BackupAssets") == false)
+            {
+                Directory.CreateDirectory(state.ExtraSettingsDataPath + "\\BackupAssets");
+            }
+
+            if (Directory.Exists(state.ExtraSettingsDataPath + "\\BackupAssets\\" + NPCtoBackup.FormKey.ModKey.ToString()) == false)
+            {
+                Directory.CreateDirectory(state.ExtraSettingsDataPath + "\\BackupAssets\\" + NPCtoBackup.FormKey.ModKey.ToString());
+            }
+
+            File.Move(inputPath, BackupPath);
         }
     }
 }
