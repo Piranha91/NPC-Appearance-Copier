@@ -1,5 +1,7 @@
 Allows the user to change the appearance of an NPC(s) to that of other NPC(s) using the Settings tab.
 
+If the "donor" NPC's facegen is in a BSA, it MUST be extracted/unpacked so that the patcher can find and transfer it to the correct NPC.
+
 You can run this plugin every time you update your Synthesis.esp if you wish, or just run it once and rename the output to generate an "NPC X as NPC Y" patch.
 
 To select an NPC, click "Settings" and then on the orange "NPCs" text. Then click "+" to add an NPC for appearance swap. Select the NPC whose appearance you want to transfer ("Copy From"), and the NPC to whom this appearance should be assigned ("Copy To"). 
