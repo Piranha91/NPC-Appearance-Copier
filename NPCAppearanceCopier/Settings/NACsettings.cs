@@ -17,8 +17,12 @@ namespace NPCAppearanceCopier.Settings
         public HashSet<NACnpc> NPCs { get; set; } = new HashSet<NACnpc>();
 
         [SynthesisOrder]
+        [SynthesisTooltip("What happens if there is a race mismatch between the donor and recipient NPC.\nChange: Recipient NPC's race gets changed to the donor NPC's race.\nPseudocopy: NAC makes a copy of the recipient NPC's race but changes appearance-related data to match the donor NPC's race.")]
+        public RaceHandlingMode RaceChangeAction { get; set; } = RaceHandlingMode.Pseudocopy;
+
+        [SynthesisOrder]
         [SynthesisTooltip("The following plugins will never have their assets merged into Synthesis.esp. Don't touch unless you know what you're doing.")]
-        public IEnumerable<ModKey> PluginsExcludedFromMerge = new HashSet<ModKey> ()
+        public HashSet<ModKey> PluginsExcludedFromMerge = new HashSet<ModKey> ()
         { 
             ModKey.FromNameAndExtension("Skyrim.esm"),
             ModKey.FromNameAndExtension("Update.esm"),
@@ -26,5 +30,11 @@ namespace NPCAppearanceCopier.Settings
             ModKey.FromNameAndExtension("HearthFires.esm"),
             ModKey.FromNameAndExtension("Dragonborn.esm")
         };
+    }
+
+    public enum RaceHandlingMode
+    {
+        Change,
+        Pseudocopy
     }
 }

@@ -31,6 +31,10 @@ namespace NPCAppearanceCopier
 
             HashSet<ModKey> PluginsToMerge = new HashSet<ModKey>();
 
+            RaceHandlingMode RaceChangeAction = settings.RaceChangeAction;
+
+            Dictionary<IFormLinkGetter<IRaceGetter>, Dictionary<IFormLink<IRaceGetter>, FormKey>> PseudoCopiedRaces = new Dictionary<IFormLinkGetter<IRaceGetter>, Dictionary<IFormLink<IRaceGetter>, FormKey>>();
+
             foreach (var NPCdef in settings.NPCs)
             {
                 Console.WriteLine("Copying appearance of {0} to {1}", NPCdef.CopyFrom.FormKey.ToString(), NPCdef.CopyTo.FormKey.ToString());
@@ -82,16 +86,40 @@ namespace NPCAppearanceCopier
                 }
 
                 // Copy NPC Facegen Nif and Dds from the donor to acceptor NPC
+
+                // first make the output paths if they don't exist
+                Directory.CreateDirectory(state.DataFolderPath + "\\meshes\\actors\\character\\facegendata\\facegeom\\" + AcceptorNPC.FormKey.ModKey.ToString());
+                Directory.CreateDirectory(state.DataFolderPath + "\\textures\\actors\\character\\facegendata\\facetint\\" + AcceptorNPC.FormKey.ModKey.ToString());
+                // then copy the facegen to those paths
                 File.Copy(donorNifPath, acceptorNifPath, true);
                 File.Copy(donorDdsPath, acceptorDdsPath, true);
                 // END FACEGEN
 
                 //Race
-                if (AcceptorNPC.Race != DonorNPCGetter.Race)
+                switch(NPCdef.RaceChangeAction)
                 {
-                    Console.WriteLine("Warning: Changing race from {0} to {1}", AcceptorNPC.Race.FormKey.ToString(), DonorNPCGetter.Race.FormKey.ToString());
+                    case NACnpc.RaceHandlingMode.Default: RaceChangeAction = settings.RaceChangeAction; break;
+                    case NACnpc.RaceHandlingMode.Change: RaceChangeAction = RaceHandlingMode.Change; break;
+                    case NACnpc.RaceHandlingMode.Pseudocopy: RaceChangeAction = RaceHandlingMode.Pseudocopy; break;
                 }
-                AcceptorNPC.Race.SetTo(DonorNPCGetter.Race.FormKey);
+
+                switch(RaceChangeAction)
+                {
+                    case RaceHandlingMode.Change:
+                        if (AcceptorNPC.Race != DonorNPCGetter.Race)
+                        {
+                            Console.WriteLine("Warning: Changing race from {0} to {1}", AcceptorNPC.Race.FormKey.ToString(), DonorNPCGetter.Race.FormKey.ToString());
+                            AcceptorNPC.Race.SetTo(DonorNPCGetter.Race.FormKey);
+                        }     
+                        break;
+
+                    case RaceHandlingMode.Pseudocopy:
+                        var copiedRace = PseudoCopyRace(DonorNPCGetter, AcceptorNPC, PseudoCopiedRaces, state);
+                        Console.WriteLine("Warning: Race has been pseudocopied from {0} to {1}", AcceptorNPC.Race.FormKey.ToString(), copiedRace.ToString());
+                        AcceptorNPC.Race.SetTo(copiedRace);
+                        break;
+                }
+                
 
                 //Head Texture
                 AcceptorNPC.HeadTexture.SetTo(DonorNPCGetter.HeadTexture.FormKeyNullable);
@@ -140,6 +168,22 @@ namespace NPCAppearanceCopier
                 if (NPCdef.CopyBody == true)
                 {
                     AcceptorNPC.WornArmor.SetTo(DonorNPCGetter.WornArmor);
+
+                    if (RaceChangeAction == RaceHandlingMode.Pseudocopy && AcceptorNPC.Race.FormKey != DonorNPCGetter.Race.FormKey)
+                    {
+                        if (state.LinkCache.TryResolve<IArmorGetter>(AcceptorNPC.WornArmor.FormKey, out var WNAM))
+                        {
+                            foreach (var aa in WNAM.Armature)
+                            {
+                                if (state.LinkCache.TryResolve<IArmorAddonGetter>(aa.FormKey, out var ARMA) && ARMA.Race != AcceptorNPC.Race && ARMA.AdditionalRaces.Contains(AcceptorNPC.Race) == false)
+                                {
+                                    var modARMA = state.PatchMod.ArmorAddons.GetOrAddAsOverride(ARMA);
+                                    modARMA.AdditionalRaces.Add(AcceptorNPC.Race);
+                                    //modARMA.Race.SetTo(AcceptorNPC.Race);
+                                }
+                            }
+                        }                         
+                    }
                 }
 
                 //Outfits
@@ -168,6 +212,172 @@ namespace NPCAppearanceCopier
                 Console.WriteLine("Remapping Dependencies from {0}.", mk.ToString());
                 state.PatchMod.DuplicateFromOnlyReferenced(state.LinkCache, mk, out var _);
             }
+        }
+
+        public static FormKey PseudoCopyRace(INpcGetter? DonorNPCGetter, Npc? AcceptorNPC, Dictionary<IFormLinkGetter<IRaceGetter>, Dictionary<IFormLink<IRaceGetter>, FormKey>> PseudoCopiedRaces, IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
+        {
+            if (DonorNPCGetter == null || AcceptorNPC == null)
+            {
+                return new FormKey();
+            }
+
+            FormKey ToReturnFK = new FormKey();
+
+            if (PseudoCopiedRaces.ContainsKey(DonorNPCGetter.Race) && PseudoCopiedRaces[DonorNPCGetter.Race].ContainsKey(AcceptorNPC.Race))
+            {
+                ToReturnFK = PseudoCopiedRaces[DonorNPCGetter.Race][AcceptorNPC.Race];
+            }
+            else
+            {
+                if (!state.LinkCache.TryResolve<IRaceGetter>(AcceptorNPC.Race.FormKey, out var acceptorRace))
+                {
+                    return ToReturnFK;
+                }
+
+                if (!state.LinkCache.TryResolve<IRaceGetter>(DonorNPCGetter.Race.FormKey, out var donorRace))
+                {
+                    return ToReturnFK;
+                }
+
+                var newRace = state.PatchMod.Races.AddNew();
+                newRace.DeepCopyIn(acceptorRace);
+                //newRace.DeepCopyIn(donorRace);
+                if (newRace != null)
+                {
+                    newRace.Flags &= ~Race.Flag.Playable;
+
+                    /*
+                    newRace.AccelerationRate = acceptorRace.AccelerationRate;
+                    
+                    if (newRace.ActorEffect != null && acceptorRace.ActorEffect != null)
+                    {
+                        newRace.ActorEffect.Clear();
+                        newRace.ActorEffect.AddRange(acceptorRace.ActorEffect);
+                    }
+                    newRace.AimAngleTolerance = acceptorRace.AimAngleTolerance;
+                    newRace.AngularAccelerationRate = acceptorRace.AngularAccelerationRate;
+                    newRace.AngularTolerance = acceptorRace.AngularTolerance;               
+                    if (newRace.Attacks != null && acceptorRace.Attacks != null)
+                    {
+                        newRace.Attacks.Clear();
+                        newRace.Attacks.AddRange(acceptorRace.Attacks.Select(getter => getter.DeepCopy()));
+                    }
+
+                    newRace.BaseCarryWeight = acceptorRace.
+                    */
+                    
+                    // eyes
+                    if (newRace.Eyes != null && donorRace.Eyes != null)
+                    {
+                        newRace.Eyes.Clear();
+                        newRace.Eyes.AddRange(donorRace.Eyes);
+                    }
+
+                    if (newRace.FaceFxPhonemes != null && donorRace.FaceFxPhonemes != null)
+                    {
+                        newRace.FaceFxPhonemes.Clear();
+                        newRace.FaceFxPhonemes.DeepCopyIn(donorRace.FaceFxPhonemes);
+                    }
+
+                    newRace.FacegenFaceClamp = donorRace.FacegenFaceClamp;
+
+                    newRace.FacegenMainClamp = donorRace.FacegenMainClamp;
+
+                    if (newRace.Hairs != null && donorRace.Hairs != null)
+                    {
+                        newRace.Hairs.Clear();
+                        newRace.Hairs.AddRange(donorRace.Hairs);
+                    }
+
+                    if (newRace.HeadData != null && donorRace.HeadData != null)
+                    {
+                        if (newRace.HeadData.Female != null && donorRace.HeadData.Female != null)
+                        {
+                            newRace.HeadData.Female.Clear();
+                            newRace.HeadData.Female.DeepCopyIn(donorRace.HeadData.Female);
+                        }
+                        if (newRace.HeadData.Male != null && donorRace.HeadData.Male != null)
+                        {
+                            newRace.HeadData.Male.Clear();
+                            newRace.HeadData.Male.DeepCopyIn(donorRace.HeadData.Male);
+                        }
+                    }
+
+                    if (newRace.MorphRace != null && donorRace.MorphRace != null)
+                    {
+                        newRace.MorphRace.SetTo(donorRace.MorphRace);
+                    }
+
+                    if (newRace.SkeletalModel != null && donorRace.SkeletalModel != null)
+                    {
+                        if (newRace.SkeletalModel.Female != null && donorRace.SkeletalModel.Female != null)
+                        {
+                            newRace.SkeletalModel.Female.Clear();
+                            newRace.SkeletalModel.Female.DeepCopyIn(donorRace.SkeletalModel.Female);
+                        }
+                        if (newRace.SkeletalModel.Male != null && donorRace.SkeletalModel.Male != null)
+                        {
+                            newRace.SkeletalModel.Male.Clear();
+                            newRace.SkeletalModel.Male.DeepCopyIn(donorRace.SkeletalModel.Male);
+                        }
+                    }
+
+                    if (newRace.Skin != null && donorRace.Skin != null)
+                    {
+                        newRace.Skin.SetTo(donorRace.Skin);
+                    }
+
+                    // Testing other attributes here
+                    /*
+                    newRace.BodyBipedObject = donorRace.BodyBipedObject;
+
+                    if (newRace.BodyData != null && donorRace.BodyData != null)
+                    {
+                        if (newRace.BodyData.Female != null && donorRace.BodyData.Female != null)
+                        {
+                            newRace.BodyData.Female.Clear();
+                            newRace.BodyData.Female.DeepCopyIn(donorRace.BodyData.Female);
+                        }
+                        if (newRace.BodyData.Male != null && donorRace.BodyData.Male != null)
+                        {
+                            newRace.BodyData.Male.Clear();
+                            newRace.BodyData.Male.DeepCopyIn(donorRace.BodyData.Male);
+                        }
+                    }
+
+                    if (newRace.BodyTemplate != null && acceptorRace.BodyTemplate != null)
+                    {
+                        newRace.BodyTemplate.Clear();
+                        newRace.BodyTemplate.DeepCopyIn(acceptorRace.BodyTemplate);
+                    }*/                   
+
+                    // add to dictionary
+                    if (PseudoCopiedRaces.ContainsKey(DonorNPCGetter.Race) == false)
+                    {
+                        PseudoCopiedRaces[DonorNPCGetter.Race] = new Dictionary<IFormLink<IRaceGetter>, FormKey>();
+                    }
+
+                    PseudoCopiedRaces[DonorNPCGetter.Race][AcceptorNPC.Race] = newRace.FormKey;
+                    ToReturnFK = newRace.FormKey;
+
+                    // patch armor addons to include this new race
+                    foreach (var arma in state.LoadOrder.PriorityOrder.WinningOverrides<IArmorAddonGetter>())
+                    {
+                        if (!state.LinkCache.TryResolve<IRaceGetter>(arma.Race.FormKey, out var armaRace))
+                        {
+                            continue;
+                        }
+
+                        if (arma.Race.Equals(acceptorRace) || arma.AdditionalRaces.Contains(acceptorRace))
+                        {
+                            var moddedArma = state.PatchMod.ArmorAddons.GetOrAddAsOverride(arma);
+                            moddedArma.AdditionalRaces.Add(newRace);
+                        }
+                    }
+                }
+            }
+
+            return ToReturnFK;
         }
 
         public static void backupFaceGen(string inputPath, Npc? NPCtoBackup, IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
