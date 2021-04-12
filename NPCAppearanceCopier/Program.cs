@@ -175,7 +175,7 @@ namespace NPCAppearanceCopier
                         {
                             foreach (var aa in WNAM.Armature)
                             {
-                                if (state.LinkCache.TryResolve<IArmorAddonGetter>(aa.FormKey, out var ARMA) && ARMA.Race != AcceptorNPC.Race && ARMA.AdditionalRaces.Contains(AcceptorNPC.Race) == false)
+                                if (state.LinkCache.TryResolve<IArmorAddonGetter>(aa.FormKey, out var ARMA) && (ARMA.Race.FormKey == DonorNPCGetter.Race.FormKey || ARMA.AdditionalRaces.Where(p => p.FormKey == DonorNPCGetter.Race.FormKey).Any())) // do not patch armature such as werewolf and vampire lord whose Race & Additional Races do not include the donor NPC's race
                                 {
                                     var modARMA = state.PatchMod.ArmorAddons.GetOrAddAsOverride(ARMA);
                                     modARMA.AdditionalRaces.Add(AcceptorNPC.Race);
