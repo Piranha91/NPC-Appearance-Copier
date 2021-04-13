@@ -37,14 +37,15 @@ namespace NPCAppearanceCopier.Settings
         public bool BackUpFaceGen { get; set; } = false;
 
         [SynthesisOrder]
-        [SynthesisTooltip("What happens if there is a race mismatch between the donor and recipient NPC.\nChange: Recipient NPC's race gets changed to the donor NPC's race.\nPseudocopy: NAC makes a copy of the recipient NPC's race but changes appearance-related data to match the donor NPC's race.\nDefault: Defers to the settings in the main menu.")]
+        [SynthesisTooltip("What happens if there is a race mismatch between the donor and recipient NPC.\nLeave: Race remains unchanged.\nChange: Recipient NPC's race gets changed to the donor NPC's race.\nPseudocopy: NAC makes a copy of the recipient NPC's race but changes appearance-related data to match the donor NPC's race.\nDefault: Defers to the settings in the main menu.")]
         public RaceHandlingMode RaceChangeAction { get; set; } = RaceHandlingMode.Default;
 
         public enum RaceHandlingMode
         {
-            Default,
+            Leave,
             Change,
-            Pseudocopy
+            Pseudocopy,
+            Default
         }
     }
 }

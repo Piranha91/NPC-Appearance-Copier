@@ -1,7 +1,7 @@
 {
   "Nickname": "NPCAppearanceCopier",
-  "Visibility": "Hidden",
-  "OneLineDescription": "Transfers the visual appearance of one NPC to another.",
+  "Visibility": "Visible",
+  "OneLineDescription": "Transfers the visual appearance of one NPC to another. Requires Synthesis.exe 0.17.6 or higher.",
   "LongDescription": "This is a Synthesis version of the original NPC Visual Transfer SSEedit script. It transfers the appearance of one NPC to another (and can handle multiple NPCs). Useful for when you like the appearance of one of the thousands of followers on the Nexus and want to transfer it to another character in your game.",
   "PreferredAutoVersioning": "Default",
   "RequiredMods": []

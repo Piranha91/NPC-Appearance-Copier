@@ -17,8 +17,8 @@ namespace NPCAppearanceCopier.Settings
         public HashSet<NACnpc> NPCs { get; set; } = new HashSet<NACnpc>();
 
         [SynthesisOrder]
-        [SynthesisTooltip("What happens if there is a race mismatch between the donor and recipient NPC.\nChange: Recipient NPC's race gets changed to the donor NPC's race.\nPseudocopy: NAC makes a copy of the recipient NPC's race but changes appearance-related data to match the donor NPC's race.")]
-        public RaceHandlingMode RaceChangeAction { get; set; } = RaceHandlingMode.Pseudocopy;
+        [SynthesisTooltip("What happens if there is a race mismatch between the donor and recipient NPC.\nLeave: Race remains unchanged.\nChange: Recipient NPC's race gets changed to the donor NPC's race.\nPseudocopy: NAC makes a copy of the recipient NPC's race but changes appearance-related data to match the donor NPC's race.")]
+        public RaceHandlingMode RaceChangeAction { get; set; } = RaceHandlingMode.Leave;
 
         [SynthesisOrder]
         [SynthesisTooltip("The following plugins will never have their assets merged into Synthesis.esp. Don't touch unless you know what you're doing.")]
@@ -34,6 +34,7 @@ namespace NPCAppearanceCopier.Settings
 
     public enum RaceHandlingMode
     {
+        Leave,
         Change,
         Pseudocopy
     }
