@@ -108,7 +108,8 @@ namespace NPCAppearanceCopier
                 //Race
                 bool bSameRace = AcceptorNPC.Race == DonorNPCGetter.Race;
                 bool bMainLeave = RaceChangeAction == RaceHandlingMode.Leave;
-                bool bNPCLeave = NPCdef.RaceChangeAction == NACnpc.RaceHandlingMode.Leave || (bMainLeave && NPCdef.RaceChangeAction == NACnpc.RaceHandlingMode.Default);
+                bool bNPCLeave = bMainLeave; // temporarily change because Synthesis won't auto-set NACnpc racehandling mode
+                //bool bNPCLeave = NPCdef.RaceChangeAction == NACnpc.RaceHandlingMode.Leave || (bMainLeave && NPCdef.RaceChangeAction == NACnpc.RaceHandlingMode.Default);
 
                 if (!bSameRace)
                 {
@@ -128,13 +129,14 @@ namespace NPCAppearanceCopier
 
                     if (!bNPCLeave)
                     {
+                        /* // temporarily change because Synthesis won't auto-set NACnpc racehandling mode
                         switch (NPCdef.RaceChangeAction)
                         {
                             case NACnpc.RaceHandlingMode.Default: RaceChangeAction = settings.RaceChangeAction; break;
                             case NACnpc.RaceHandlingMode.Change: RaceChangeAction = RaceHandlingMode.Change; break;
                             case NACnpc.RaceHandlingMode.Pseudocopy: RaceChangeAction = RaceHandlingMode.Pseudocopy; break;
                         }
-
+                        */
                         switch (RaceChangeAction)
                         {
                             case RaceHandlingMode.Change:

@@ -36,9 +36,10 @@ namespace NPCAppearanceCopier.Settings
         [SynthesisTooltip("If checked, the acceptor NPC's FaceGen mesh and texture will be backed up to Synthesis\\Data\\NPCAppearanceCopier\\BackupAssets. Not necessary if using MO2 because the copied FaceGen will go into Overwrite instead of replacing the original files.")]
         public bool BackUpFaceGen { get; set; } = false;
 
-        [SynthesisOrder]
-        [SynthesisTooltip("What happens if there is a race mismatch between the donor and recipient NPC.\nLeave: Race remains unchanged.\nChange: Recipient NPC's race gets changed to the donor NPC's race.\nPseudocopy: NAC makes a copy of the recipient NPC's race but changes appearance-related data to match the donor NPC's race.\nDefault: Defers to the settings in the main menu.")]
-        public RaceHandlingMode RaceChangeAction { get; set; } = RaceHandlingMode.Default;
+        // Temporarily commented out because Synthesis won't auto-set the setting
+        //[SynthesisOrder]
+        //[SynthesisTooltip("What happens if there is a race mismatch between the donor and recipient NPC.\nLeave: Race remains unchanged.\nChange: Recipient NPC's race gets changed to the donor NPC's race.\nPseudocopy: NAC makes a copy of the recipient NPC's race but changes appearance-related data to match the donor NPC's race.\nDefault: Defers to the settings in the main menu.")]
+        //public RaceHandlingMode RaceChangeAction { get; set; } = RaceHandlingMode.Default;
 
         public enum RaceHandlingMode
         {
