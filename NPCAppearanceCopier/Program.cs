@@ -159,7 +159,7 @@ namespace NPCAppearanceCopier
                     }
                     else
                     {
-                        Console.WriteLine("Warning: the donor NPC's race is not the same as the acceptor NPC's race. The acceptor's race ({0}) will be kept.", acceptorRaceDispStr);
+                        Console.WriteLine("Warning: the donor NPC's race ({0}) is not the same as the acceptor NPC's race. The acceptor's race ({1}) will be kept.\nTHIS CAN CAUSE THE DARK FACEGEN BUG. You have been warned.", donorRaceDispStr, acceptorRaceDispStr);
                     }
                 }
                 
