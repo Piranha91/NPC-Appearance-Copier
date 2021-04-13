@@ -240,7 +240,7 @@ namespace NPCAppearanceCopier
                 {
                     foreach (var FL in DonorNPCGetter.ContainedFormLinks)
                     {
-                        if (settings.PluginsExcludedFromMerge.Contains(FL.FormKey.ModKey) == false && PluginsToMerge.Contains(FL.FormKey.ModKey) == false)
+                        if (settings.PluginsExcludedFromMerge.Contains(FL.FormKey.ModKey) == false && PluginsToMerge.Contains(FL.FormKey.ModKey) == false && FL.FormKey.ModKey != state.PatchMod.ModKey)
                         {
                             PluginsToMerge.Add(FL.FormKey.ModKey);
                         }
