@@ -106,7 +106,7 @@ namespace NPCAppearanceCopier
                 // END FACEGEN
 
                 //Race
-                bool bSameRace = AcceptorNPC.Race == DonorNPCGetter.Race;
+                bool bSameRace = AcceptorNPC.Race.FormKey == DonorNPCGetter.Race.FormKey;
                 bool bMainLeave = RaceChangeAction == RaceHandlingMode.Leave;
                 bool bNPCLeave = bMainLeave; // temporarily change because Synthesis won't auto-set NACnpc racehandling mode
                 //bool bNPCLeave = NPCdef.RaceChangeAction == NACnpc.RaceHandlingMode.Leave || (bMainLeave && NPCdef.RaceChangeAction == NACnpc.RaceHandlingMode.Default);
