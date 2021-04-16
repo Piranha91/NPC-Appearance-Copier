@@ -53,7 +53,13 @@ namespace NPCAppearanceCopier
             }
             else if (outputDir != "")
             {
-                Console.WriteLine("Directory {0} was not found. Exporting to {1} instead.", settings.FacegenOutputDirectory, outputDir);
+                outputDir = state.DataFolderPath;
+                Console.WriteLine("Directory {0} was not found. Exporting FaceGen to {1} instead.", settings.FacegenOutputDirectory, outputDir);
+            }
+            else
+            {
+                outputDir = state.DataFolderPath;
+                Console.WriteLine("Exporting FaceGen to {0}.", outputDir);
             }
 
             foreach (var NPCdef in settings.NPCs)
