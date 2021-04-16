@@ -21,7 +21,7 @@ namespace NPCAppearanceCopier.Settings
         public RaceHandlingMode RaceChangeAction { get; set; } = RaceHandlingMode.Change;
 
         [SynthesisOrder]
-        [SynthesisTooltip("Directory to which facegen should be copied (if blank or invalid, facegen will be copied directly to the Data folder (or overwrite if using MO2).")]
+        [SynthesisTooltip("Directory to which facegen should be copied (if blank or invalid, facegen will be copied directly to Synthesis\\Data\\NPC-Appearance-Copier\\FaceGen Output.")]
         public string FacegenOutputDirectory { get; set; } = "";
 
         [SynthesisOrder]

@@ -45,21 +45,27 @@ namespace NPCAppearanceCopier
 
             Dictionary<IFormLinkGetter<IRaceGetter>, Dictionary<IFormLink<IRaceGetter>, FormKey>> PseudoCopiedRaces = new Dictionary<IFormLinkGetter<IRaceGetter>, Dictionary<IFormLink<IRaceGetter>, FormKey>>();
 
-            string outputDir = "";
+            string outputDir = state.ExtraSettingsDataPath + "\\FaceGen Output";
             if (Directory.Exists(settings.FacegenOutputDirectory))
             {
                 outputDir = settings.FacegenOutputDirectory;
                 Console.WriteLine("Exporting FaceGen to {0}", settings.FacegenOutputDirectory);
             }
-            else if (outputDir != "")
-            {
-                outputDir = state.DataFolderPath;
-                Console.WriteLine("Directory {0} was not found. Exporting FaceGen to {1} instead.", settings.FacegenOutputDirectory, outputDir);
-            }
             else
             {
-                outputDir = state.DataFolderPath;
-                Console.WriteLine("Exporting FaceGen to {0}.", outputDir);
+                if (settings.FacegenOutputDirectory != "")
+                {
+                    Console.WriteLine("Directory {0} was not found. Exporting FaceGen to {1} instead.", settings.FacegenOutputDirectory, outputDir);
+                }
+                else
+                {
+                    Console.WriteLine("Exporting FaceGen to {0}.", outputDir);
+                }
+
+                if (Directory.Exists(outputDir) == false)
+                {
+                    Directory.CreateDirectory(outputDir);
+                }
             }
 
             foreach (var NPCdef in settings.NPCs)
@@ -281,6 +287,8 @@ namespace NPCAppearanceCopier
                 Console.WriteLine("Remapping Dependencies from {0}.", mk.ToString());
                 state.PatchMod.DuplicateFromOnlyReferenced(state.LinkCache, mk, out var _);
             }
+
+            Console.WriteLine("\n======PLEASE DO NOT FORGET to package the output FaceGen meshes and textures and install as a mod======");
         }
 
         public static FormKey PseudoCopyRace(INpcGetter? DonorNPCGetter, Npc? AcceptorNPC, Dictionary<IFormLinkGetter<IRaceGetter>, Dictionary<IFormLink<IRaceGetter>, FormKey>> PseudoCopiedRaces, IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
