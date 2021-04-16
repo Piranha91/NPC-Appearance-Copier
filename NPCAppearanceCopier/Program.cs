@@ -20,9 +20,19 @@ namespace NPCAppearanceCopier
                     nickname: "Settings",
                     path: "settings.json",
                     out Settings)
+                .AddRunnabilityCheck(CanRunPatch)
                 .AddPatch<ISkyrimMod, ISkyrimModGetter>(RunPatch)
                 .SetTypicalOpen(GameRelease.SkyrimSE, "NPCApperanceCopier.esp")
                 .Run(args);
+        }
+
+        private static void CanRunPatch(IRunnabilityState state)
+        {
+            NACsettings settings = Settings.Value;
+            if (settings.FacegenOutputDirectory != "" && !Directory.Exists(settings.FacegenOutputDirectory))
+            {
+                throw new Exception("Cannot find output directory specified in settings: " + settings.FacegenOutputDirectory);
+            }
         }
 
         public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
@@ -34,6 +44,17 @@ namespace NPCAppearanceCopier
             RaceHandlingMode RaceChangeAction = settings.RaceChangeAction;
 
             Dictionary<IFormLinkGetter<IRaceGetter>, Dictionary<IFormLink<IRaceGetter>, FormKey>> PseudoCopiedRaces = new Dictionary<IFormLinkGetter<IRaceGetter>, Dictionary<IFormLink<IRaceGetter>, FormKey>>();
+
+            string outputDir = "";
+            if (Directory.Exists(settings.FacegenOutputDirectory))
+            {
+                outputDir = settings.FacegenOutputDirectory;
+                Console.WriteLine("Exporting FaceGen to {0}", settings.FacegenOutputDirectory);
+            }
+            else if (outputDir != "")
+            {
+                Console.WriteLine("Directory {0} was not found. Exporting to {1} instead.", settings.FacegenOutputDirectory, outputDir);
+            }
 
             foreach (var NPCdef in settings.NPCs)
             {
@@ -67,7 +88,7 @@ namespace NPCAppearanceCopier
 
                 // HANDLE FACEGEN HERE
                 string donorNifPath = state.DataFolderPath + "\\meshes\\actors\\character\\facegendata\\facegeom\\" + DonorNPCGetter.FormKey.ModKey.ToString() + "\\00" + DonorNPCGetter.FormKey.IDString() + ".nif";
-                string acceptorNifPath = state.DataFolderPath + "\\meshes\\actors\\character\\facegendata\\facegeom\\" + AcceptorNPC.FormKey.ModKey.ToString() + "\\00" + AcceptorNPC.FormKey.IDString() + ".nif";
+                string acceptorNifPath = outputDir + "\\meshes\\actors\\character\\facegendata\\facegeom\\" + AcceptorNPC.FormKey.ModKey.ToString() + "\\00" + AcceptorNPC.FormKey.IDString() + ".nif";
                 if (!File.Exists(donorNifPath))
                 {
                     Console.WriteLine("The following Facegen .nif does not exist. If it is within a BSA, please extract it. Patching of this NPC will be skipped.\n{0}", donorNifPath);
@@ -75,7 +96,7 @@ namespace NPCAppearanceCopier
                 }
 
                 string donorDdsPath = state.DataFolderPath + "\\textures\\actors\\character\\facegendata\\facetint\\" + DonorNPCGetter.FormKey.ModKey.ToString() + "\\00" + DonorNPCGetter.FormKey.IDString() + ".dds";
-                string acceptorDdsPath = state.DataFolderPath + "\\textures\\actors\\character\\facegendata\\facetint\\" + AcceptorNPC.FormKey.ModKey.ToString() + "\\00" + AcceptorNPC.FormKey.IDString() + ".dds";
+                string acceptorDdsPath = outputDir + "\\textures\\actors\\character\\facegendata\\facetint\\" + AcceptorNPC.FormKey.ModKey.ToString() + "\\00" + AcceptorNPC.FormKey.IDString() + ".dds";
                 if (!File.Exists(donorDdsPath))
                 {
                     Console.WriteLine("The following Facegen .dds does not exist. If it is within a BSA, please extract it. Patching of this NPC will be skipped.\n{0}", donorDdsPath);
@@ -98,8 +119,8 @@ namespace NPCAppearanceCopier
                 // Copy NPC Facegen Nif and Dds from the donor to acceptor NPC
 
                 // first make the output paths if they don't exist
-                Directory.CreateDirectory(state.DataFolderPath + "\\meshes\\actors\\character\\facegendata\\facegeom\\" + AcceptorNPC.FormKey.ModKey.ToString());
-                Directory.CreateDirectory(state.DataFolderPath + "\\textures\\actors\\character\\facegendata\\facetint\\" + AcceptorNPC.FormKey.ModKey.ToString());
+                Directory.CreateDirectory(outputDir + "\\meshes\\actors\\character\\facegendata\\facegeom\\" + AcceptorNPC.FormKey.ModKey.ToString());
+                Directory.CreateDirectory(outputDir + "\\textures\\actors\\character\\facegendata\\facetint\\" + AcceptorNPC.FormKey.ModKey.ToString());
                 // then copy the facegen to those paths
                 File.Copy(donorNifPath, acceptorNifPath, true);
                 File.Copy(donorDdsPath, acceptorDdsPath, true);

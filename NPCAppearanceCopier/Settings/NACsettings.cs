@@ -21,6 +21,10 @@ namespace NPCAppearanceCopier.Settings
         public RaceHandlingMode RaceChangeAction { get; set; } = RaceHandlingMode.Change;
 
         [SynthesisOrder]
+        [SynthesisTooltip("Directory to which facegen should be copied (if blank or invalid, facegen will be copied directly to the Data folder (or overwrite if using MO2).")]
+        public string FacegenOutputDirectory { get; set; } = "";
+
+        [SynthesisOrder]
         [SynthesisTooltip("The following plugins will never have their assets merged into Synthesis.esp. Don't touch unless you know what you're doing.")]
         public HashSet<ModKey> PluginsExcludedFromMerge = new HashSet<ModKey> ()
         { 
