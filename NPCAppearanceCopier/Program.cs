@@ -287,7 +287,7 @@ namespace NPCAppearanceCopier
 
                 if (NPCdef.CopyResourceFiles)
                 {
-                    Console.WriteLine("Copying assets for {0]", DonorNPCDispStr);
+                    Console.WriteLine("Copying assets for {0}", DonorNPCDispStr);
                     copyAssets(DonorNPCGetter, settings, state.DataFolderPath, NPCdef, false, state, fileOperationLog);
                 }
             }
