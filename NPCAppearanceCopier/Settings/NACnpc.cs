@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Noggog;
 using Mutagen.Bethesda.Synthesis.Settings;
+using Mutagen.Bethesda.Plugins;
 
 namespace NPCAppearanceCopier.Settings
 {
@@ -31,6 +32,16 @@ namespace NPCAppearanceCopier.Settings
         [SynthesisOrder]
         [SynthesisTooltip("If checked, the donor NPC's assets will be copied into Synthesis.esp so that the donor plugin can be disabled (ignored if the donor NPC comes from the base game).")]
         public bool CopyResourcesToPlugin { get; set; } = false;
+
+        [SynthesisOrder]
+        [SynthesisTooltip("If checked, the donor NPC's asset flies will be copied into the output directory so that the donor mod can be disabled (ignored if the donor NPC comes from the base game).")]
+        public bool CopyResourceFiles { get; set; } = false;
+
+        [SynthesisOrder]
+        [SynthesisTooltip("If checked, the patcher will look for resource texture files in .nifs as well as in the plugin records")]
+        public bool FindExtraTexturesInNifs { get; set; } = true;
+
+        
 
         [SynthesisOrder]
         [SynthesisTooltip("If checked, the acceptor NPC's FaceGen mesh and texture will be backed up to Synthesis\\Data\\NPCAppearanceCopier\\BackupAssets. Not necessary if using MO2 because the copied FaceGen will go into Overwrite instead of replacing the original files.")]

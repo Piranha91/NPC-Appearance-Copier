@@ -7,6 +7,9 @@ using Mutagen.Bethesda.Skyrim;
 using System.Threading.Tasks;
 using NPCAppearanceCopier.Settings;
 using System.IO;
+using Mutagen.Bethesda.Plugins;
+using Mutagen.Bethesda.Plugins.Records;
+using static NPCAppearanceCopier.AssetCopier;
 
 namespace NPCAppearanceCopier
 {
@@ -44,6 +47,8 @@ namespace NPCAppearanceCopier
             RaceHandlingMode RaceChangeAction = settings.RaceChangeAction;
 
             Dictionary<IFormLinkGetter<IRaceGetter>, Dictionary<IFormLink<IRaceGetter>, FormKey>> PseudoCopiedRaces = new Dictionary<IFormLinkGetter<IRaceGetter>, Dictionary<IFormLink<IRaceGetter>, FormKey>>();
+
+            FileOperationLog fileOperationLog = new();
 
             string outputDir = state.ExtraSettingsDataPath + "\\FaceGen Output";
             if (Directory.Exists(settings.FacegenOutputDirectory))
@@ -119,13 +124,13 @@ namespace NPCAppearanceCopier
                 if (File.Exists(acceptorNifPath) && NPCdef.BackUpFaceGen == true)
                 {
                     string AcceptorNifBackupPath = state.ExtraSettingsDataPath + "\\BackupAssets\\" + AcceptorNPC.FormKey.ModKey.ToString() + "\\00" + AcceptorNPC.FormKey.IDString() + ".nif_bak_0";
-                    backupFaceGen(AcceptorNifBackupPath, AcceptorNPC, state);
+                    BackupFaceGen(AcceptorNifBackupPath, AcceptorNPC, state);
                 }
 
                 if (File.Exists(acceptorDdsPath) && NPCdef.BackUpFaceGen == true)
                 {
                     string AcceptorDdsBackupPath = state.ExtraSettingsDataPath + "\\BackupAssets\\" + AcceptorNPC.FormKey.ModKey.ToString() + "\\00" + AcceptorNPC.FormKey.IDString() + ".dds_bak_0";
-                    backupFaceGen(AcceptorDdsBackupPath, AcceptorNPC, state);
+                    BackupFaceGen(AcceptorDdsBackupPath, AcceptorNPC, state);
                 }
 
                 // Copy NPC Facegen Nif and Dds from the donor to acceptor NPC
@@ -271,7 +276,7 @@ namespace NPCAppearanceCopier
                 // If necessary, add dependencies (headparts, worn armors, etc) to be merged into Synthesis.esp
                 if (NPCdef.CopyResourcesToPlugin == true)
                 {
-                    foreach (var FL in DonorNPCGetter.ContainedFormLinks)
+                    foreach (var FL in DonorNPCGetter.EnumerateFormLinks())
                     {
                         if (settings.PluginsExcludedFromMerge.Contains(FL.FormKey.ModKey) == false && PluginsToMerge.Contains(FL.FormKey.ModKey) == false && FL.FormKey.ModKey != state.PatchMod.ModKey)
                         {
@@ -279,6 +284,8 @@ namespace NPCAppearanceCopier
                         }
                     }
                 }
+
+                copyAssets(DonorNPCGetter, settings, state.DataFolderPath, NPCdef, false, state, fileOperationLog);   
             }
 
             //remap dependencies
@@ -412,7 +419,7 @@ namespace NPCAppearanceCopier
             return ToReturnFK;
         }
 
-        public static void backupFaceGen(string inputPath, Npc? NPCtoBackup, IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
+        public static void BackupFaceGen(string inputPath, Npc? NPCtoBackup, IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
             if (NPCtoBackup == null)
             {
