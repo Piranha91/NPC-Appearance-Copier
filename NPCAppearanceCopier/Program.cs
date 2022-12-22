@@ -200,13 +200,13 @@ namespace NPCAppearanceCopier
                         Console.WriteLine("Warning: the donor NPC's race ({0}) is not the same as the acceptor NPC's race. The acceptor's race ({1}) will be kept.\nTHIS CAN CAUSE THE DARK FACEGEN BUG. You have been warned.", donorRaceDispStr, acceptorRaceDispStr);
                     }
                 }
-                
+
 
                 //Head Texture
                 AcceptorNPC.HeadTexture.SetTo(DonorNPCGetter.HeadTexture.FormKeyNullable);
 
                 //Head Parts
-                AcceptorNPC.HeadParts.Clear(); 
+                AcceptorNPC.HeadParts.Clear();
                 foreach (var hp in DonorNPCGetter.HeadParts)
                 {
                     AcceptorNPC.HeadParts.Add(hp);
@@ -228,7 +228,7 @@ namespace NPCAppearanceCopier
 
                 //Hair Color
                 AcceptorNPC.HairColor.SetTo(DonorNPCGetter.HairColor.FormKeyNullable);
-                
+
                 //Texture Lighting
                 AcceptorNPC.TextureLighting = DonorNPCGetter.TextureLighting;
 
@@ -262,7 +262,7 @@ namespace NPCAppearanceCopier
                                     modARMA.AdditionalRaces.Add(AcceptorNPC.Race);
                                 }
                             }
-                        }                         
+                        }
                     }
                 }
 
@@ -285,7 +285,11 @@ namespace NPCAppearanceCopier
                     }
                 }
 
-                copyAssets(DonorNPCGetter, settings, state.DataFolderPath, NPCdef, false, state, fileOperationLog);   
+                if (NPCdef.CopyResourceFiles)
+                {
+                    Console.WriteLine("Copying assets for {0]", DonorNPCDispStr);
+                    copyAssets(DonorNPCGetter, settings, state.DataFolderPath, NPCdef, false, state, fileOperationLog);
+                }
             }
 
             //remap dependencies
