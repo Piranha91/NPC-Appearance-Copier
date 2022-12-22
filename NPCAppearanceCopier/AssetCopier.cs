@@ -13,7 +13,7 @@ namespace NPCAppearanceCopier
 {
     public class AssetCopier
     {
-        public static void copyAssets(INpcGetter npc, NACsettings settings, string currentModDirectory, NACnpc PPS, bool isTemplated, IPatcherState<ISkyrimMod, ISkyrimModGetter> state, FileOperationLog fileCopyOperations)
+        public static void copyAssets(INpcGetter npc, NACsettings settings, string currentModDirectory, NACnpc perNPCsetting, bool isTemplated, IPatcherState<ISkyrimMod, ISkyrimModGetter> state, FileOperationLog fileCopyOperations)
         {
             HashSet<string> meshes = new HashSet<string>();
             HashSet<string> textures = new HashSet<string>();
@@ -27,17 +27,17 @@ namespace NPCAppearanceCopier
             var winningMod = context.ModKey;
 
             //FaceGen (not needed; handled by parent function)
-            /*
+            
             if (isTemplated == false)
             {
                 var FaceGenSubPaths = getFaceGenSubPathStrings(npc.FormKey);
                 meshes.Add(FaceGenSubPaths.Item1);
                 textures.Add(FaceGenSubPaths.Item2);
             }
-            if (PPS.CopyResourceFiles)
+            if (perNPCsetting.CopyResourceFiles)
             {
                 getAssetsReferencedByplugin(npc, settings, meshes, textures, state);
-            }*/
+            }
 
             //extract needed files from BSA
             HashSet<string> extractedMeshFiles = new HashSet<string>();
@@ -48,7 +48,7 @@ namespace NPCAppearanceCopier
             } // end BSA handling for extra assets found in plugin
 
 
-            if (PPS.CopyResourceFiles && PPS.FindExtraTexturesInNifs)
+            if (perNPCsetting.CopyResourceFiles && perNPCsetting.FindExtraTexturesInNifs)
             {
                 HashSet<string> alreadyHandledTextures = new HashSet<string>(textures, StringComparer.OrdinalIgnoreCase); // ignored these if found in nif because they have already been processed
                 alreadyHandledTextures.UnionWith(extractedTexFiles); // will simply be empty if settings.HandleBSAFiles_Patching == false
@@ -152,7 +152,7 @@ namespace NPCAppearanceCopier
             }
         }
 
-        public static void getAssetsReferencedByplugin(Npc npc, NACsettings settings, HashSet<string> meshes, HashSet<string> textures, IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
+        public static void getAssetsReferencedByplugin(INpcGetter npc, NACsettings settings, HashSet<string> meshes, HashSet<string> textures, IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
         {
             //headparts
             foreach (var hp in npc.HeadParts)
