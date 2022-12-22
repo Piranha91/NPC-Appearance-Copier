@@ -27,13 +27,15 @@ namespace NPCAppearanceCopier
             var winningMod = context.ModKey;
 
             //FaceGen (not needed; handled by parent function)
-            
+            /*
             if (isTemplated == false)
             {
                 var FaceGenSubPaths = getFaceGenSubPathStrings(npc.FormKey);
                 meshes.Add(FaceGenSubPaths.Item1);
                 textures.Add(FaceGenSubPaths.Item2);
-            }
+            }*/
+
+
             if (perNPCsetting.CopyResourceFiles)
             {
                 getAssetsReferencedByplugin(npc, settings, meshes, textures, state);
