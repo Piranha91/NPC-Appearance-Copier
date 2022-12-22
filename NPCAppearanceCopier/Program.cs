@@ -448,7 +448,14 @@ namespace NPCAppearanceCopier
                 Directory.CreateDirectory(state.ExtraSettingsDataPath + "\\BackupAssets\\" + NPCtoBackup.FormKey.ModKey.ToString());
             }
 
-            File.Move(inputPath, BackupPath);
+            try
+            {
+                File.Move(inputPath, BackupPath);
+            }
+            catch
+            {
+                Console.WriteLine("Backup Warning: could not move {0} to {1}", inputPath, BackupPath);
+            }
         }
     }
 }
