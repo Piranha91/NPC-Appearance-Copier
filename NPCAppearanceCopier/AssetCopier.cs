@@ -27,14 +27,14 @@ namespace NPCAppearanceCopier
             var winningMod = context.ModKey;
 
             //FaceGen (not needed; handled by parent function)
+            var FaceGenSubPaths = getFaceGenSubPathStrings(npc.FormKey);
             /*
             if (isTemplated == false)
             {
-                var FaceGenSubPaths = getFaceGenSubPathStrings(npc.FormKey);
                 meshes.Add(FaceGenSubPaths.Item1);
                 textures.Add(FaceGenSubPaths.Item2);
-            }*/
-
+            }
+            */
 
             if (perNPCsetting.CopyResourceFiles)
             {
@@ -56,7 +56,9 @@ namespace NPCAppearanceCopier
                 alreadyHandledTextures.UnionWith(extractedTexFiles); // will simply be empty if settings.HandleBSAFiles_Patching == false
 
                 HashSet<string> extraTexturesFromNif = new HashSet<string>();
-                getExtraTexturesFromNif(meshes, currentModDirectory, extraTexturesFromNif, alreadyHandledTextures); //traverse nifs for extra textures (loose nifs - in mod folder)
+                var nifsToSearch = new HashSet<string>(meshes);
+                nifsToSearch.Add(FaceGenSubPaths.Item1);
+                getExtraTexturesFromNif(nifsToSearch, currentModDirectory, extraTexturesFromNif, alreadyHandledTextures); //traverse nifs for extra textures (loose nifs - in mod folder)
 
                 if (settings.HandleBSAFiles)
                 {
